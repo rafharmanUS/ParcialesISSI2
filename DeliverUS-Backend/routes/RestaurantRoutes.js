@@ -32,6 +32,7 @@ module.exports = (options) => {
     .post(
       middlewares.isLoggedIn,
       middlewares.hasRole('owner'),
+      middlewares.checkOnlyRestaurantInOwnershipPromoted,
       upload,
       RestaurantValidation.create,
       middlewares.handleValidation,
@@ -44,6 +45,7 @@ module.exports = (options) => {
       middlewares.hasRole('owner'),
       middlewares.checkEntityExists(Restaurant, 'restaurantId'),
       middlewares.checkRestaurantOwnership,
+      middlewares.checkOnlyRestaurantInOwnershipPromoted,
       upload,
       RestaurantValidation.update,
       middlewares.handleValidation,
@@ -54,6 +56,15 @@ module.exports = (options) => {
       middlewares.checkEntityExists(Restaurant, 'restaurantId'),
       middlewares.checkRestaurantOwnership,
       RestaurantController.destroy)
+
+  app.route('/restaurants/:restaurantId/promote')
+    .put(
+      middlewares.isLoggedIn,
+      middlewares.hasRole('owner'),
+      middlewares.checkEntityExists(Restaurant, 'restaurantId'),
+      middlewares.checkRestaurantOwnership,
+      middlewares.checkOnlyRestaurantInOwnershipPromoted,
+      RestaurantController.promote)
 
   app.route('/restaurants/:restaurantId/orders')
     .get(

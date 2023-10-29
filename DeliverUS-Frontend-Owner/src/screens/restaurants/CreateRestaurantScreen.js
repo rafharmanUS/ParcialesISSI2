@@ -4,7 +4,7 @@ import * as ExpoImagePicker from 'expo-image-picker'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import * as yup from 'yup'
 import DropDownPicker from 'react-native-dropdown-picker'
-import { create, getRestaurantCategories } from '../../api/RestaurantEndpoints'
+import { create, getRestaurantCategories, getAll } from '../../api/RestaurantEndpoints'
 import InputItem from '../../components/InputItem'
 import TextRegular from '../../components/TextRegular'
 import * as GlobalStyles from '../../styles/GlobalStyles'
@@ -17,9 +17,17 @@ import TextError from '../../components/TextError'
 export default function CreateRestaurantScreen ({ navigation }) {
   const [open, setOpen] = useState(false)
   const [restaurantCategories, setRestaurantCategories] = useState([])
+  const [promotedRestaurants, setPromotedRestaurants] = useState(false)
   const [backendErrors, setBackendErrors] = useState()
+  const [isPromoted, setIsPromoted] = useState(true)
 
-  const initialRestaurantValues = { name: null, description: null, address: null, postalCode: null, url: null, shippingCosts: null, email: null, phone: null, restaurantCategoryId: null }
+  const customButtonStyle = {
+    backgroundColor: isPromoted
+      ? GlobalStyles.brandSuccess
+      : GlobalStyles.brandPrimary
+  }
+
+  const initialRestaurantValues = { name: null, description: null, address: null, postalCode: null, url: null, shippingCosts: null, email: null, phone: null, restaurantCategoryId: null, isPromoted: true }
   const validationSchema = yup.object().shape({
     name: yup
       .string()
@@ -53,7 +61,13 @@ export default function CreateRestaurantScreen ({ navigation }) {
       .number()
       .positive()
       .integer()
-      .required('Restaurant category is required')
+      .required('Restaurant category is required'),
+    isPromoted: yup
+      .boolean()
+      .test('Check no other restaurant is promoted', 'You can only promote one restaurant at a time',
+        function () {
+          return (!promotedRestaurants && isPromoted) || (promotedRestaurants && !isPromoted)
+        })
   })
 
   useEffect(() => {
@@ -77,6 +91,24 @@ export default function CreateRestaurantScreen ({ navigation }) {
       }
     }
     fetchRestaurantCategories()
+  }, [])
+
+  useEffect(() => {
+    async function fetchPromotedRestaurants () {
+      try {
+        const fetchedRestaurants = await getAll()
+        const fetchedPromotedRestaurants = fetchedRestaurants.some((e) => { return e.isPromoted })
+        setPromotedRestaurants(fetchedPromotedRestaurants)
+      } catch (error) {
+        showMessage({
+          message: `There was an error while retrieving if there was an already promoted restaurant. ${error} `,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashTextStyle
+        })
+      }
+    }
+    fetchPromotedRestaurants()
   }, [])
 
   useEffect(() => {
@@ -161,6 +193,26 @@ export default function CreateRestaurantScreen ({ navigation }) {
                 name='phone'
                 label='Phone:'
               />
+
+              <Pressable
+                name = 'isPromoted'
+                onPress={ async () => {
+                  await setFieldValue('isPromoted', !isPromoted)
+                  setIsPromoted(!isPromoted)
+                }}
+
+                style= {[styles.button, customButtonStyle]}>
+
+                {isPromoted &&
+                  <TextRegular textStyle={styles.text}>En Promoción!</TextRegular>
+                }
+
+                {!isPromoted &&
+                  <TextRegular textStyle={styles.text}>No Promocionado</TextRegular>
+                }
+
+              </Pressable>
+              <ErrorMessage name={'isPromoted'} render={msg => <TextError>{msg}</TextError> }/>
 
               <DropDownPicker
                 open={open}
