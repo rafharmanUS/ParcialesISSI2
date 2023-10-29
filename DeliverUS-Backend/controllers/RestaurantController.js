@@ -9,13 +9,13 @@ exports.index = async function (req, res) {
   try {
     const restaurants = await Restaurant.findAll(
       {
-        attributes: ['id', 'name', 'description', 'address', 'postalCode', 'url', 'shippingCosts', 'averageServiceMinutes', 'email', 'phone', 'logo', 'heroImage', 'status', 'restaurantCategoryId'],
+        attributes: ['id', 'name', 'description', 'address', 'postalCode', 'url', 'shippingCosts', 'averageServiceMinutes', 'email', 'phone', 'logo', 'heroImage', 'status', 'restaurantCategoryId', 'isPromoted'],
         include:
       {
         model: RestaurantCategory,
         as: 'restaurantCategory'
       },
-        order: [[{ model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']]
+        order: [['isPromoted', 'DESC'], [{ model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']]
       }
     )
     res.json(restaurants)
@@ -28,7 +28,13 @@ exports.indexOwner = async function (req, res) {
   try {
     const restaurants = await Restaurant.findAll(
       {
-        attributes: ['id', 'name', 'description', 'address', 'postalCode', 'url', 'shippingCosts', 'averageServiceMinutes', 'email', 'phone', 'logo', 'heroImage', 'status', 'restaurantCategoryId'],
+        attributes: ['id', 'name', 'description', 'address', 'postalCode', 'url', 'shippingCosts', 'averageServiceMinutes', 'email', 'phone', 'logo', 'heroImage', 'status', 'restaurantCategoryId', 'isPromoted'],
+        include:
+      {
+        model: RestaurantCategory,
+        as: 'restaurantCategory'
+      },
+        order: [['isPromoted', 'DESC'], [{ model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']],
         where: { userId: req.user.id }
       })
     res.json(restaurants)
@@ -104,6 +110,17 @@ exports.destroy = async function (req, res) {
       message = 'Could not delete restaurant.'
     }
     res.json(message)
+  } catch (err) {
+    res.status(500).send(err)
+  }
+}
+
+exports.promote = async function (req, res) {
+  try {
+    const restaurant = await Restaurant.findByPk(req.params.restaurantId)
+    restaurant.isPromoted ? restaurant.isPromoted = false : restaurant.isPromoted = true
+    const updatedRestaurant = await restaurant.save()
+    res.json(updatedRestaurant)
   } catch (err) {
     res.status(500).send(err)
   }

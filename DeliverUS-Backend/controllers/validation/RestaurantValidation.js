@@ -25,7 +25,8 @@ module.exports = {
     }).withMessage('Please upload an image with format (jpeg, png).'),
     check('logo').custom((value, { req }) => {
       return checkFileMaxSize(req, 'logo', maxFileSize)
-    }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB')
+    }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB'),
+    check('isPromoted').exists({ checkNull: true }).isBoolean().toBoolean()
   ],
   update: [
     check('name').exists().isString().isLength({ min: 1, max: 255 }).trim(),
@@ -49,6 +50,7 @@ module.exports = {
     }).withMessage('Please upload an image with format (jpeg, png).'),
     check('logo').custom((value, { req }) => {
       return checkFileMaxSize(req, 'logo', maxFileSize)
-    }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB')
+    }).withMessage('Maximum file size of ' + maxFileSize / 1000000 + 'MB'),
+    check('isPromoted').exists({ checkNull: true }).isBoolean().toBoolean()
   ]
 }
